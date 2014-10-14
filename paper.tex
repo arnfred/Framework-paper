@@ -1,4 +1,4 @@
-\documentclass[]{elsarticle}
+\documentclass[review]{elsarticle}
 
 %\usepackage[pdftex]{graphicx}
 
@@ -71,7 +71,7 @@ A straightforward way to find a set of correspondences using only feature points
 
 Brown and Lowe \cite{brown2005multi} extend ratio match to deal with a set of images by using not the ratio of the best and second best correspondence, but the average ratio of the best and the average of second best correspondences across a set of images.  Rabin et al.\ \cite{rabin2009statistical} try to enhance descriptor matching by looking at the statistical distribution of local features in the matched images, and only return a match when such a correspondence would not occur by mere chance. Finally, a precursor of the algorithms discussed in this paper was introduced by the authors as \emph{Mirror-Match} \cite{arnfred2013mirror}, which makes use of the feature points in both images to decide if a match is valid.
 
-A plethora of solutions have combined ratio match with various geometric constraints to improve matching. These constraints are based on assumptions regarding the transformation between the query and \emph{target images}. At the stricter end we have epipolar constraints assuming that the images can be tied by a homography \cite{torr2000mlesac, chum2005matching} and angular constraints assuming the correspondences are angled similarly \cite{kim2008efficient, schmid1997local}. Often these approaches are made computationally feasible by modeling the case of feature correspondences as an instance of graph matching, where each feature is a vertex, and edge values correspond to a geometric relation between two features. In this case approximate graph matching algorithms can be used to efficiently establish an isomorphism between the graph of features in two images \cite{leordeanu2005spectral, torresani2008feature, yarkony2010covering}. Others define image regions and reject or accept correspondences based on the regions they connect \cite{cho2009feature, wu2011robust}.
+A plethora of solutions have combined ratio match with various geometric constraints to improve matching. These constraints are based on assumptions regarding the transformation between the query and \emph{target images}. At the stricter end we have epipolar constraints assuming that the images can be tied by a homography \cite{torr2000mlesac, chum2005matching} and angular constraints assuming the correspondences are angled similarly \cite{kim2008efficient, schmid1997local}. Often these approaches are made computationally feasible by modeling the case of feature correspondences as an instance of graph matching, where each feature is a vertex, and edge values correspond to a geometric relation between two features. In this case approximate graph matching algorithms can be used to efficiently establish an isomorphism between the graph of features in two images \cite{leordeanu2005spectral, torresani2008feature, yarkony2010covering, yuan2012efficient}. Others define image regions and reject or accept correspondences based on the regions they connect \cite{cho2009feature, wu2011robust}.
 
 Any matching method relying on geometric constraints is limited by inherent assumptions about the geometric relationship between the two images. Broad assumptions such as the epipolar constraint only apply in simple image transformations. For more complex transformations we need models suitable for each particular case, which limits the algorithm to the subset of images that fit the model.  In the case of object recognition for example, the transformations from one scene to another often feature a change in perspective, background, and sometimes variations within the object itself: a person can change pose, a car model can have different configurations, a flower can bloom etc.
 
@@ -94,12 +94,11 @@ The underlying assumption in ratio match is that the point we seek to match in t
 
 To make further discussion easier we introduce the following nomenclature:
 \begin{itemize}
-\item{Let $f_q$ be any feature point in the \emph{query image} that we 
-    are currently trying to match}.
-\item{Let $F$ be a set of features. $F_{t}$ for example is the set 
-    of features from the \emph{target image}}.
+\item{Let $f_q$ be a feature point in the \emph{query image}}.
+\item{Let $F$ be a set of features. $F_{t}$ denotes all
+        features from the \emph{target image}}.
 \item{Let $\tau \in [0 \ldots 1]$ be a threshold used to decide whether 
-    to keep a match or discard it.} %We keep a match only if it has a \emph{uniqueness ratio} lower than $\tau$}
+    to keep a match.} %We keep a match only if it has a \emph{uniqueness ratio} lower than $\tau$}
 \item{Let the \emph{proposed match} be the nearest neighbor of the query 
     feature $f_q$ picked from a set of feature points that we will call 
 the \emph{proposal set} which does not contain the query feature itself}.
@@ -151,7 +150,7 @@ F_{t})$
 \end{algorithmic}
 \end{algorithm}
 
-Algorithm~\ref{alg-gen} shows the generalized matching framework where the \emph{proposal set} and \emph{baseline set} are defined according to Figure~\ref{fig:overview}.  In practice for e.g.\ \emph{Ratio-Match} we can obtain $f_p$ and $f_b$ by finding the two nearest neighbors of $F_{t}$. The other algorithms can be optimized similarly. Figure~\ref{fig:matching} illustrates the structure of this algorithm.
+Algorithm~\ref{alg-gen} shows the generalized matching framework where the \emph{proposal set} and \emph{baseline set} are defined according to Figure~\ref{fig:overview}. Figure~\ref{fig:matching} illustrates the structure of this algorithm.
 
 
 \begin{figure}[htb]
