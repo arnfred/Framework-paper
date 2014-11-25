@@ -46,7 +46,7 @@ A General Framework For Image Feature Matching Without Geometric Constraints}
 %\boldmath
 Computer vision applications that involve the matching of local image features frequently use \emph{Ratio-Match} as introduced by Lowe and others, but is this really the optimal approach?  We formalize the theoretical foundation of \emph{Ratio-Match} and propose a general framework encompassing \emph{Ratio-Match} and three other matching methods. Using this framework, we establish a theoretical performance ranking in terms of precision and recall, proving that all three methods consistently outperform or equal \emph{Ratio-Match}.
 
-We confirm the theoretical results experimentally on over 3000 image pairs and show that we can increase matching precision by up to 20 percentage-points without further assumptions about the images we are using.  These gains are achieved by making only a few key changes of the \emph{Ratio-Match} algorithm and do not increase computation times.
+We confirm the theoretical results experimentally on over 3000 image pairs and show that we can increase matching precision by up to 30 percentage-points without further assumptions about the images we are using.  These gains are achieved by making only a few key changes of the \emph{Ratio-Match} algorithm and do not increase computation times.
 \end{abstract}
 
 \begin{keyword}
@@ -88,9 +88,9 @@ The paper is organized as follows. In Section~\ref{S:MatchingMethods} we introdu
 %
 \subsection{Definitions}
 %
-The proposed framework is inspired by \emph{Ratio-Match} as introduced by Deriche et al.\ \cite{deriche1994robust} and later used by Baumberg~\cite{baumberg2000reliable} and Lowe~\cite{lowe2004sift}. \emph{Ratio-Match} makes use of the ratio between the nearest and second nearest neighbor as a heuristic for finding correspondences between feature points. Matches are returned only if this ratio is lower than a given threshold $\tau$.
+The proposed framework is inspired by \emph{Ratio-Match} as introduced by Deriche et al.\ \cite{deriche1994robust} and later used by Baumberg~\cite{baumberg2000reliable} and Lowe~\cite{lowe2004sift}. \emph{Ratio-Match} is motivated by the observation that nearest neighbor matching is not necessarily the best strategy as illustrated by~\cite{lowe2004sift, mikolajczyk2005performance}. The distance between the feature descriptors of two nearest neighbors might tell us on a global level how much they resemble each other, but it does not tell us if other feature points are equally similar. \emph{Ratio-Match} makes use of the ratio between the nearest and second nearest neighbor as a heuristic for our confidence in the match. Matches are returned only if this ratio is lower than a given threshold $\tau$, filtering out nearest neighbors that are ambiguous because other points match almost equally well.
 
-The underlying assumption in ratio match is that the point we seek to match in the \emph{query image} has only one match in a given \emph{target image} or no matches at all. In both cases we should expect the \emph{second} nearest neighbor in the \emph{target image} to be an untrue correspondence.  This means that we can use the distance between the feature point and the second closest descriptor as a \emph{baseline} for false correspondences. By dividing the distance to the nearest neighbor with this baseline, we get an estimated measure for how distinct the correspondence is from a false match.  
+The underlying assumption in ratio match is that the point we seek to match in the \emph{query image} has only one true correspondence in a given \emph{target image} or no matches at all. In both cases we can infer that the \emph{second} nearest neighbor in the \emph{target image} is not a true correspondence. We look at the distance between the second nearest neighbor and the feature point as a \emph{baseline}. It tells us how similar the descriptors of two feature points can be when they are not a true correspondence. Some feature points might have very unique descriptors with large distances to false correspondences while others may be generic with plenty of similar points. Knowing the baseline for all features allows us to be lenient in the first case and cautious in the second. In practice \emph{Ratio-Match} scores a match by dividing the distance to the nearest neighbor with the distance to the second nearest neighbor (the baseline) to get an estimated measure for how distinct the correspondence is from a false match.  
 
 To make further discussion easier we introduce the following nomenclature:
 \begin{itemize}
@@ -99,13 +99,13 @@ To make further discussion easier we introduce the following nomenclature:
         features from the \emph{target image}}.
 \item{Let $\tau \in [0 \ldots 1]$ be a threshold used to decide whether 
     to keep a match.} %We keep a match only if it has a \emph{uniqueness ratio} lower than $\tau$}
-\item{Let the \emph{proposed match} be the nearest neighbor of the query 
+\item{Let the \emph{proposed match} be the nearest neighbor of a query 
     feature $f_q$ picked from a set of feature points that we will call 
-the \emph{proposal set} which does not contain the query feature itself}.
+the \emph{proposal set} which does not contain the query feature}.
 \item{Let the \emph{baseline match} be the nearest neighbor of the query 
     feature $f_q$ picked from a set of feature points that we will call 
 the \emph{baseline set} which neither contains the \emph{proposed match} 
-nor the query feature}.
+nor the query feature}. In \emph{Ratio-Match} the \emph{baseline match} is the second nearest neighbor.
 \end{itemize}
 
 %
@@ -120,7 +120,9 @@ nor the query feature}.
 \label{fig:overview}
 \end{figure}
 
-Given two images we can construct the proposal and baseline sets in six different ways as illustrated in Figure~\ref{fig:overview}. In the case of \emph{Ratio-Match} \cite{lowe2004sift} the \emph{proposal set} consists of all the feature points in the \emph{target image}.  Similarly the \emph{baseline set} consists of all the feature points in the \emph{target image} except the \emph{proposed} match. For \emph{Ratio-Match} this practically means that given a query feature, $f_q$, the \emph{proposed match} and the \emph{baseline match} are the two nearest neighbors in the set of feature points in the \emph{target image}, and the ratio is decided uniquely based on the \emph{target image}. In turn \emph{Mirror-Match} as introduced by the authors in \cite{arnfred2013mirror} works by constructing the \emph{proposal set} and \emph{baseline set} by combining features from both the \emph{query} and \emph{target image}. By similar variations of the \emph{proposal} and \emph{baseline set} we derive four more algorithms as illustrated in Figure~\ref{fig:overview}. We will not discuss \emph{Self-Match-Ext} and \emph{Both-Match} further in this paper since we prove them to be equivalent with \emph{Self-Match} and \emph{Mirror-Match} respectively in \ref{A:self} and \ref{A:mirror}.
+We can generalize \emph{Ratio-Match} by expanding on the idea of a \emph{baseline} and \emph{proposal set}. With \emph{Ratio-Match} these two sets are created from features in the \emph{target image}, but they need not be. If we use the features in the \emph{query image} as well as the combined features of both images we end up with six possible permutations of a \emph{Ratio-Match}-like algorithm. We illustrate these variations in Figure~\ref{fig:overview} and will go on to both prove theoretically and demonstrate empirically that \emph{Ratio-Match} is among the least performant of the pack.
+
+The \emph{Mirror-Match} variation was originally introduced by the authors in~\cite{arnfred2013mirror} where it was shown to be superior to \emph{Ratio-Match}. In this paper we improve on this work by established formal proofs for the precision of the matching algorithms, by evaluating the algorithms on a more thorough dataset and by identifying \emph{Mirror-Match} as part of a general framework. We will not discuss the \emph{Self-Match-Ext} and \emph{Both-Match} variations in this paper since we prove them to be equivalent with \emph{Self-Match} and \emph{Mirror-Match} respectively in \ref{A:self} and \ref{A:mirror}.
 
 \begin{algorithm}[htb]
 \caption{Generalized matching algorithm for two images}
@@ -290,7 +292,7 @@ We have thus proven that -- based on assumptions \#1-3 -- for any given recall r
 
 The three assumptions underlying the formal ranking of algorithms presented above have been chosen to reflect conditions under which we would ideally match feature points. However, for each assumption there exist corner cases where it is no longer valid. In this section we discuss these corner cases in order to review the circumstances under which the absolute or relative performance of the algorithms might differ.
 
-The first assumption states that there is at most one unique match to every feature point, which is often the case for natural images. However, for the recognition of object classes or in images with repetitive content, a point in the \emph{query image} might have several true correspondences in the \emph{target image}, so using a \emph{baseline match} from the \emph{target image} will lead to a much higher \emph{uniqueness ratio}. However, as long as the \emph{query image} does not contain repetitive objects, we can still use \emph{Self-Match} without loss of precision.
+The first assumption states that there is at most one unique match to every feature point, which is often the case for natural images. However, for the recognition of object classes or in images with repetitive content, a point in the \emph{query image} might have several true correspondences in the \emph{target image}, so using a \emph{baseline match} from the \emph{target image} will lead to a much higher \emph{uniqueness ratio}. However, as long as the \emph{query image} does not contain repetitive objects, we can still use \emph{Self-Match} without loss of precision. Conversely the query image could have several similar objects which could negatively impact performance for all algorithms but \emph{Ratio-Match} in cases where the target image only contained one such object. However when applied to scene matching we would expect there to be several similar objects in the target image too for cases of matching scenes. In this case it could easily be ambiguous to match any of these points together. Here the uniqueness assumption plays to our advantage by forcing us to ignore image features that will lead to ambiguous matches.
 
 According to the second assumption, feature descriptors behave such that when matched, a true correspondence to a \emph{query feature} will always be closer in distance than any other feature in the query image. For this assumption to be violated either the \emph{query image} contains repeating patterns (violating assumption \#1) or the two images are different enough (i.e.\ taken from very different viewpoints or under different lighting conditions) that the descriptor distance between two unrelated features ends up being closer than the distance between a feature and its true correspondence. In this case \emph{Ratio-Match-Ext} and \emph{Mirror-Match} would discard the match while \emph{Ratio-Match} would still attempt to match the descriptor to a feature in the \emph{target image}. Figure~\ref{fig:no_query} shows how the precision of the nearest neighbor match varies with the ratio of the distance to the closest \emph{target feature} over distance to the closest \emph{query feature}. When this ratio is more than 1 there exists a \emph{query feature} which is better matched than the closest \emph{target feature}. The statistic is gathered over 3024 image pairs featuring 3D objects (see Section~\ref{S:3dobjects}) and the results demonstrate that for the cases where the second assumption is violated and \emph{Ratio-Match} might be advantageous, the nearest neighbor in the target image is less likely to be a correct match. % TODO: Create plot and write more precisely
 
@@ -311,13 +313,13 @@ correspondences for 3000 image pairs.}
 %
 In this section we present the experiments and evaluation results comparing \emph{Self-Match}, \emph{Ratio-Match}, \emph{Ratio-Match-Ext} and \emph{Mirror-Match}. 
 
-We evaluate the algorithm on the 3D Objects database released by Moreels and Pietro \cite{moreels2007evaluation} in Section~\ref{S:3dobjects}. This database contains a set of 86 3D objects photographed from all sides at 5 degree intervals from two different elevation angles and under three different lighting conditions. 
+We evaluate the algorithm on the 3D Objects database released by Moreels and Pietro \cite{moreels2007evaluation} in Section~\ref{S:3dobjects} as well as four image pairs from the graffiti dataset released by Mikolajczyk et al \cite{mikolajczyk2005performance} in Section~\ref{S:patches}. The 3D Objects database contains a set of 86 3D objects photographed from all sides at 5 degree intervals from two different elevation angles and under three different lighting conditions. The graffiti dataset contains eight sets of six images, each highlighting a different challenge when matching images. We evaluate the framework on four particularly challenging cases. 
 
 For the experiments we use the SIFT descriptor and keypoint detector with default parameters as implemented in the OpenCV library 2.4.6.  To further test how the framework performs across descriptors, we evaluate SURF \cite{bay2006surf}, BRISK \cite{leutenegger2011brisk}, BRIEF \cite{calonder2010brief}, and FREAK \cite{alahi2012freak} in Section~\ref{label:desc}. 
 
 Across all experiments, only the luminance channel is used in the feature detection and description stage.  Images larger than $1024\!\times\!768$ are resized to fit within those dimensions using ImageMagick with default parameters.  
 
-\subsection{Evaluation of Methods}
+\subsection{Evaluation of framework on 3D Objects}
 \label{S:3dobjects}
 
 The 3D objects dataset by Moreels and Pietro \cite{moreels2007evaluation} allows us to experimentally compare matching algorithms over a large range of object and surface types rotated on a turnstile and photographed from every 5 degree turn.  15 objects from the dataset are shown in Figure~\ref{fig:3d_objects}.  We use images of 84 different objects under three different lighting conditions at 12 different angle intervals, conducting experiments with a total of 3024 image pairs.  
@@ -447,7 +449,7 @@ To validate matches, Moreels and Pietro propose a method using epipolar constrai
     \label{fig:frog}%
 \end{figure}%
 
-To compute the total number of possible correspondences, we take each feature in a \emph{query image} and count how many of them have a feature in the \emph{target image} which would satisfy the epipolar constraints outlined above. When using this dataset, features with no correspondences were not included in the set of features for testing, so as to avoid matching non-moving background and foreground objects.
+To compute the total number of possible correspondences, we take each feature in a \emph{query image} and count how many of them have a feature in the \emph{target image} which would satisfy the epipolar constraints outlined above. When using this dataset, features with no correspondences were not included in the set of features for testing. This was necessary because a relatively small number of actual true correspondences between folds in the background material were mistakenly counted as false positives when evaluated which impacted the precision of test in particular on cases with few true correspondences. In practice only few feature points were excluded for this reason.
 
 We evaluate all matching algorithms from our framework on the 3D Objects dataset by matching images at different angular intervals. For each object we pick the \emph{query} image as the image taken at 10 degrees rotation for calibration stability.  We then match this image with the same object turned an additional $\Delta$ degrees, $\Delta \in \{5, 10, \ldots, 60\}$.  For every angle interval we compare images taken under 3 different lighting conditions as provided by the dataset. We include all objects in the database for which photos at 5 degree angle intervals are available except for the ``Rooster'' and ``Sponge'' objects due to image irregularities. 
 
@@ -455,18 +457,171 @@ We evaluate all matching algorithms from our framework on the 3D Objects dataset
 	\centering
     \includegraphics[width=\columnwidth]{images/results_all_objects}
     \caption{Results for the 3D objects dataset. Each plot 
-    contains data accumulated from 84 objects photographed under 3 
+    contains the average of 84 objects photographed under 3 
 different lighting conditions.}
     \label{fig:all_objects}
 \end{figure*}
 
-Figure~\ref{fig:all_objects} shows the performance of the different matching methods in our proposed framework for $12$ increasingly bigger angle differences. The results are shown in a precision / recall plot to make it easy to compare performance in terms of precision at similar levels of recall.  For each plot we show the accumulated results on all 3D objects, weighted by the number of possible true correspondences for the particular object. This ensures that each object contributes equally to the final result, despite some objects resulting in disproportionally more matches than others.
+Figure~\ref{fig:all_objects} shows the performance of the different matching methods in our proposed framework for $12$ increasingly bigger angle differences. The results are shown in a precision / recall plot to make it easy to compare performance in terms of precision at similar levels of recall.  For each plot we show the averaged results on all 3D objects, with equal weight given to the result from each image.
 
 \emph{Ratio-Match} and \emph{Self-Match} show similar results, while \emph{Mirror-Match} and \emph{Ratio-Match-Ext} outperform both of them, showing the advantage of composing the \emph{proposed set} of features from both images. \emph{Mirror-Match} fares slightly but consistently better than \emph{Ratio-Match-Ext}. In general we see the largest performance improvements at lower recall and a  convergence of precision at higher recall. This is expected since a higher recall is a direct consequence of a more lenient threshold; as we let the threshold approach $1$, we lose the benefits of thresholding on the \emph{uniqueness ratio}, and all methods start approximating the results of a simple nearest neighbor match. For all but \emph{Ratio-Match}, the features with better matches within the same image are still weeded out, which explains the tail end of \emph{Ratio-Match} at high recall where the other algorithms no longer have results. As we demonstrated in \cite{arnfred2013mirror}, the removal of within-image matches improves performance on image pairs with partial or no overlap. For no overlap we would expect a matching algorithm to reject matches within regions that have no matching counterparts in the other image.
 
 The performance gap between methods increases gradually with angle, reaching its maximum between $25$ and $40$ degrees, where \emph{Mirror-Match} exhibits about 20 percentage-points higher precision than \emph{Ratio-Match}. At larger viewpoint differences above $45$ degrees, the performance gain decreases.  We suspect this is partly because assumption \#2 stops being valid when the images are transformed beyond a certain level of recognizability.
 
 To summarize, the methods perform as predicted on the 3D Objects dataset with \emph{Mirror-Match} in general performing better than \emph{Ratio-Match-Ext}, which in turn outperforms \emph{Ratio-Match}. The experimental results also show that \emph{Self-Match} overall performs equal to or better than \emph{Ratio-Match}.
+
+\subsection{Evaluation on partially overlapping scenes}
+\label{S:patches}
+%
+\begin{figure}[b]
+    \centering
+    \begin{subfigure}[t]{0.20\columnwidth}
+        \centering
+        \includegraphics[width=1\columnwidth]{images/acr/boat1}
+    \end{subfigure}%
+    ~ %
+    \begin{subfigure}[t]{0.20\columnwidth}
+        \centering
+        \includegraphics[width=1\columnwidth]{images/acr/graf1}
+    \end{subfigure}%
+    ~ %
+    \begin{subfigure}[t]{0.23\columnwidth}
+        \centering
+        \includegraphics[width=1\columnwidth]{images/acr/bikes1}
+    \end{subfigure}%
+    ~ %
+    \begin{subfigure}[t]{0.23\columnwidth}
+        \centering
+        \includegraphics[width=1\columnwidth]{images/acr/wall1}
+    \end{subfigure}%
+    \vspace{1.5 mm}
+
+    \begin{subfigure}[t]{0.20\columnwidth}
+        \centering
+        \includegraphics[width=1\columnwidth]{images/acr/boat4}
+    \end{subfigure}%
+    ~ %
+    \begin{subfigure}[t]{0.20\columnwidth}
+        \centering
+        \includegraphics[width=1\columnwidth]{images/acr/graf3}
+    \end{subfigure}%
+    ~ %
+    \begin{subfigure}[t]{0.23\columnwidth}
+        \centering
+        \includegraphics[width=1\columnwidth]{images/acr/bikes6}
+    \end{subfigure}%
+    ~ %
+    \begin{subfigure}[t]{0.21\columnwidth}
+        \centering
+        \includegraphics[width=1\columnwidth]{images/acr/wall4}
+    \end{subfigure}%
+    \caption{Four image pairs from the Graffiti dataset by Mikolajczyk et al.\ \cite{mikolajczyk2005performance}. From left to right the images are `Boat' (rotation), `Graf' (perspective), `Bikes' (blur) and `Wall' (perspective).}
+    \label{fig:patch_objects}
+\end{figure}
+
+\begin{figure}[htb]
+    \centering
+    \begin{subfigure}[t]{0.16\columnwidth}
+        \centering
+        \includegraphics[width=1\columnwidth]{images/acr/patches/patch_1_1}
+    \end{subfigure}%
+    ~~ %
+    \begin{subfigure}[t]{0.16\columnwidth}
+        \centering
+        \includegraphics[width=1\columnwidth]{images/acr/patches/patch_2_1}
+    \end{subfigure}%
+    ~~ %
+    \begin{subfigure}[t]{0.16\columnwidth}
+        \centering
+        \includegraphics[width=1\columnwidth]{images/acr/patches/patch_3_1}
+    \end{subfigure}%
+    ~~ %
+    \begin{subfigure}[t]{0.16\columnwidth}
+        \centering
+        \includegraphics[width=1\columnwidth]{images/acr/patches/patch_4_1}
+    \end{subfigure}%
+    ~~ %
+    \begin{subfigure}[t]{0.16\columnwidth}
+        \centering
+        \includegraphics[width=1\columnwidth]{images/acr/patches/patch_5_1}
+    \end{subfigure}%
+    \vspace{1.5 mm}
+
+    \begin{subfigure}[t]{0.16\columnwidth}
+        \centering
+        \includegraphics[width=1\columnwidth]{images/acr/patches/patch_1_2}
+    \end{subfigure}%
+    ~~ %
+    \begin{subfigure}[t]{0.16\columnwidth}
+        \centering
+        \includegraphics[width=1\columnwidth]{images/acr/patches/patch_2_2}
+    \end{subfigure}%
+    ~~ %
+    \begin{subfigure}[t]{0.16\columnwidth}
+        \centering
+        \includegraphics[width=1\columnwidth]{images/acr/patches/patch_3_2}
+    \end{subfigure}%
+    ~~ %
+    \begin{subfigure}[t]{0.16\columnwidth}
+        \centering
+        \includegraphics[width=1\columnwidth]{images/acr/patches/patch_4_2}
+    \end{subfigure}%
+    ~~ %
+    \begin{subfigure}[t]{0.16\columnwidth}
+        \centering
+        \includegraphics[width=1\columnwidth]{images/acr/patches/patch_5_2}
+    \end{subfigure}%
+    \caption{Five examples of image patches extracted from the `graf 1-3' image pair shown in Figure~\ref{fig:patch_objects}. Each image is a 300x300 pixel crop taken from a random position in `graf 1' (top row) and `graf 3' (bottom row).}
+    \label{fig:patch_examples}
+\end{figure}
+
+To evaluate how the different algorithms in the framework handle partially overlapping scenes we make use of four images from the Graffiti dataset by Mikolajczyk et al.\ \cite{mikolajczyk2005performance} as displayed in Figure\ \ref{fig:patch_objects} all featuring challenging perspective change. For each of the four image pairs we generate a hundred pairs of smaller crops each crop randomly positioned within the original image. Five examples of this process can be seen in Figure~\ref{fig:patch_examples}. This process ensures that image pairs that does not contain any overlap in scene are still visually similar, making it more challenging for a matching algorithm to avoid false positives, i.e. matching local image features that are not true correspondences.
+
+In practice the amount of overlap between pairs in a test set will 
+depend on the overlap and viewpoint change in the source image pair.  To 
+give a rough idea, Table~\ref{table:overlap} shows the overlap of patch 
+pairs created from images 1 and 3 of the \emph{Graf} image.
+
+\begin{table}[htb]
+\caption{Overlap in the set of 100 patch pairs created from the `Graf' image pair (Figure~\ref{fig:patch_objects}).}
+\label{table:overlap}
+	\centering
+%	\small
+\begin{tabular}{r*{3}{r}}
+\hline
+	Amount of overlap: & 0\% & $< 50$\% & $> 50$\%  \\
+	\noalign{\smallskip}
+	%
+	Number of patch pairs: & 21 & 54 & 25 \\
+	\hline
+\end{tabular}
+\end{table}
+
+Given a potential match between two pixels $p_1$ and 
+$p_2$, $m = \left(p_1, p_2\right)$, and a homography $H$ relating the two images $I_1$ and $I_2$, we 
+can calculate if $m$ is an inlier by checking if the two points satisfy the following criteria:
+\begin{equation*}
+\left\vert H p_1 - p_2 \right\vert + \left\vert H^{-1}p_2 - p_1 \right\vert < d_{\max}
+\end{equation*}
+That is, the distance between $p_1$ translated to $I_2$ and $p_2$ 
+\emph{plus} the distance between $p_2$ translated to $I_1$ should be 
+less than a certain threshold (we use $d_{\max}=5$ pixels here).
+
+As with the 3D Objects we accumulate results across the hundred image crop pairs by using an average weighted by the amount of true correspondences between each cropped pair. This ensures that difficult to match and trivial image pairs have an equal impact on the evaluation result despite the difficult image pairs yielding far less actual matches.
+\begin{figure*}[t]
+    \centering
+    \includegraphics[width=\columnwidth]{images/results_acr_patches}
+    \caption{Results for the Graffiti dataset. Each plot contains the
+average result over 100 partially overlapping image patches based on the same
+two images weighted over the number of true correspondences for each pair.}
+    \label{fig:patches}
+\end{figure*}
+
+In Figure~\ref{fig:patches} we see the performance of the three different matching methods over 400 crop pairs based on four image pairs. As for the 3D Objects the results are shown in a precision-recall plot weighted by the number of possible true correspondences for the individual crop pairs.
+
+In the plots for `boat', `graf' and `bikes' we see the same pattern unfold. \emph{Ratio-Match} performs equally well as the other algorithms at low and high recall rates, but is otherwise outperformed by \emph{Self-Match}, \emph{Ratio-Match-Ext} and \emph{Mirror-Match}. Out of these three algorithms, \emph{Mirror-Match} performs consistently better than the other two in the case of `boat' and 'graf' while being matched by \emph{Self-Match} when testing for blur on `bikes'. Finally `bark' demonstrates a case where there is no discernible difference between the matching algorithms. These results are in agreement with the theoretical findings and showcase a range of improvements by \emph{Mirror-Match} over \emph{Ratio-Match} varying from about 30 percentage points increase in precision at low recall rates for `graf' to an almost identical performance in the case of `bark'.
+
+For all four image pairs we see a precision dip at very low recall which is explained by the presence of image crop pairs with no or little overlap. When matching these pairs we might often find matches even though there are no or few possible true correspondences which in effect negatively impacts the results at very low recall rates.
 
 \subsection{Evaluation of Descriptors}
 \label{label:desc}
@@ -492,43 +647,33 @@ Part of this difference between SIFT and the other descriptors can be explained 
 In terms of computational complexity, the algorithms can be implemented in $O(n\log n)$, if we assume that both the \emph{query} and the \emph{target} image have $n$ feature points. For a \emph{target image} with $m$ features where $m$ is significantly different from $n$, the complexities are as noted in Table~\ref{table:running_times}. In practice the constant factors involved in the actual matching of two images with approximately the same number of feature points are usually small enough that all the algorithms run at very similar speeds. This is also shown in Table~\ref{table:running_times}, which contains the running times as measured while matching 15 3D objects under three different lighting conditions ($42$ image pairs were matched in total). The running times are averaged over three separate runs of each algorithm implemented using the same data structures and libraries in Python. 
 
 \begin{table}[htb]
-\caption{Complexity and running times tested on 45 image pairs with average $n = 237$ and average $m = 247$ feature points
+\caption{Complexity and average running times over 45 different image pairs with average $n = 237$ and average $m = 247$ feature points
 as tested on a Intel\textregistered\ Core\texttrademark\ i5-3550 CPU @ 
 3.30~GHz with 8~GB memory.}
 \label{table:running_times}
 	\centering
 %	\small
     \begin{tabular}{{l}{l}{l}}
-    Algorithm & Complexity & Running Time\\
+    Algorithm & Complexity & Avg Running Time\\
     \hline
     \noalign{\smallskip}
     %
-    \emph{Self-Match} & $O(n\log(nm))$ & 118s  \\
+    \emph{Self-Match} & $O(n\log(nm))$ & 2.62s  \\
     %\emph{Self-Match-Ext} & $O(n\log(n(n+m)))$ & 109s\\
-    \emph{Ratio-Match} & $O(n\log(m))$ & 114s\\
-    \emph{Ratio-Match-Ext} & $O(n\log(n+m))$ & 112s\\
+    \emph{Ratio-Match} & $O(n\log(m))$ & 2.53s\\
+    \emph{Ratio-Match-Ext} & $O(n\log(n+m))$ & 2.49s\\
     %\emph{Both-Match} & $O(n\log(n(n+m)))$ & 116s\\
-    \emph{Mirror-Match} & $O(n\log(n+m))$ & 110s \\
+    \emph{Mirror-Match} & $O(n\log(n+m))$ & 2.44s \\
     \hline
 \end{tabular}
 \end{table}
-
-\subsection{Extending to Multiple target images}
-%
-When we match a \emph{query image} against multiple \emph{target images}, as for example in image stitching, assumption \#1 that any feature in the \emph{query image} has at most one real correspondence in the set of target features is no longer true. It might be the case that two \emph{target images} contain the same real object which yields two target features that are both real correspondences. In this case calculating the \emph{uniqueness ratio} by dividing the distance of one real correspondence with the distance to another renders it entirely useless if the two features are found in sets where there might be more than one correct correspondence.
-
-Brown et al.\ \cite{brown2005multi} propose calculating the uniqueness ratio by taking the average of the $n$ nearest neighbors in each of the $n$ \emph{target images}. Since their particular case deals with images that are aligned horizontally one after the other, this approach is not flawed per se. However for the more general case of $N$ \emph{target images} with an unknown amount of overlap in the target group, their approach would not work since several features in the target group could possibly be a correct correspondence. 
-
-This leaves us with two alternatives. Either we match the \emph{query image} to every \emph{target image} individually, or we use a matching strategy where the \emph{baseline set} is guaranteed not to contain any real correspondences. \emph{Self-Match} provides such a set, since the \emph{baseline set} of \emph{Self-Match} only contains features in the \emph{query image} itself. All the other methods discussed use the \emph{target image} to construct the \emph{baseline set}, which means that a baseline match might very well be a correct correspondence, leading to a \emph{uniqueness ratio} close to $1$. In addition, matching a \emph{query image} to $N$ \emph{target images} with \emph{Self-Match} is vastly faster than matching the \emph{query image} to every \emph{target image}: If we assume that every of the $N$ images has $n$ features, then matching the \emph{query image} to all $N$ images can be done in $O(Nn\log(n))$ using a metric tree. However, matching with \emph{Self-Match} is done in $O(n\log(nN)) = O(n\log(N) + n\log(n))$.
 
 \section{Conclusions}
 \label{S:Summary}
 
 We have proposed a framework of matching methods building on the ideas behind \emph{Ratio-Match} and \emph{Mirror-Match} introducing the variations \emph{Self-Match} and \emph{Ratio-Match-Ext}. We formally proved under three assumptions that \emph{Mirror-Match} performs better than or equal to \emph{Ratio-Match-Ext} in terms of precision and recall, which in turn performs better than or equal to \emph{Ratio-Match}.
 
-From an evaluation using images of rotated 3D objects, we have shown that the theoretical conclusions are confirmed by our experimental evaluation, with \emph{Mirror-Match} often outperforming \emph{Ratio-Match} significantly over 3024 image pairs. Finally we show that the theoretical conclusions hold across a variety of popular feature descriptors (SIFT, SURF, BRISK, BRIEF, and FREAK). These performance gains come for free in terms of both computational complexity as well as actual computing time.
-
-With the framework we introduced three simple methods that are all applicable in situations where \emph{Ratio-Match} is currently used.  \emph{Ratio-Match-Ext} and \emph{Mirror-Match} can readily and easily replace \emph{Ratio-Match} without any performance penalty and with an increase in precision.  However, both are limited to matching image pairs like \emph{Ratio-Match}. \emph{Self-Match} on the other hand, which is on par with \emph{Ratio-Match} across all evaluations, can be applied when matching multiple overlapping images. 
+From an evaluation using images of rotated 3D objects, we have shown that the theoretical conclusions are confirmed by our experimental evaluation, with \emph{Mirror-Match} often outperforming \emph{Ratio-Match} significantly over 3024 image pairs. With further evaluation on partially overlapping scenes we have shown that this also holds true for cases where we can't be sure to find the queried object in the other image. Finally we show that the theoretical conclusions hold across a variety of popular feature descriptors (SIFT, SURF, BRISK, BRIEF, and FREAK). These performance gains come for free in terms of both computational complexity as well as actual computing time.
 
 \appendix
 
